@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sociable Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260308-chat" rel="stylesheet">
+</head>
+<body class="chat-page">
+    <div class="bg-layer"></div>
+
+    <header class="chat-header-wrap">
+        <div class="chat-header">
+            <div>
+                <p class="chat-kicker">Private chat</p>
+                <h1>Conversation #{{ chat.id }}</h1>
+            </div>
+            <a href="/" class="btn btn-ghost">Back to feed</a>
+        </div>
+    </header>
+
+    <main class="chat-main">
+        <section class="chat-shell">
+            <div id="chatMessages" class="chat-messages">
+                {% if new_message %}
+                    {% for m in new_message %}
+                        <article class="message-row {% if m.sender_id == current_user_id %}own{% else %}other{% endif %}">
+                            <div class="message-bubble">
+                                <p class="message-text">{{ m.text }}</p>
+                                <div class="message-meta">
+                                    <span>{{ m.user.username }}</span>
+                                    <time>{{ m.created_at }}</time>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state chat-empty">
+                        <h3>No messages yet.</h3>
+                        <p>Send the first message to start this conversation.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <form class="chat-composer" method="post" action="/message/{{ chat.id }}">
+                <input type="text" name="content" maxlength="2000" required placeholder="Type a message...">
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            const container = document.getElementById('chatMessages');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        })();
+    </script>
+</body>
+</html>

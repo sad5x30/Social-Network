@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Sociable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260318a" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-layer"></div>
+
+    <header class="topbar">
+        <a href="/" class="brand">
+            <span class="brand-dot"></span>
+            <span class="brand-name">Sociable | Profile</span>
+        </a>
+
+        <nav class="top-actions">
+            <a href="/" class="btn btn-ghost">Вернуться</a>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <section class="feed-section profile-shell">
+            <div>
+                <p class="hero-kicker">Профиль</p>
+                <h2>Личный кабинет</h2>
+            </div>
+
+            <div class="profile-grid">
+                <article class="profile-card">
+                    <div class="profile-avatar-wrap">
+                        {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="Аватар {{ current_user.username }}" class="profile-avatar-image">
+                        {% else %}
+                            <div class="profile-avatar-fallback">
+                                {{ current_user.username[:1].upper() }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="profile-info">
+                        <h1>{{ current_user.username }}</h1>
+                        <p class="profile-meta">Твой профиль в Sociable</p>
+
+                        <div class="profile-facts">
+                            <div class="profile-fact">
+                                <span>Дата регистрации</span>
+                                <strong>{{ current_user.created_at }}</strong>
+                            </div>
+                            <div class="profile-fact">
+                                <span>Статус</span>
+                                <strong>{{ "Активен" if current_user.is_active else "Неактивен" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <aside class="profile-panel">
+                    <h3>Сменить аватар</h3>
+                    <p>Загрузи изображение в формате PNG или JPG, и новый аватар сразу появится в профиле.</p>
+
+                    <form action="/auth/users/me/avatar" method="post" enctype="multipart/form-data" class="profile-form">
+                        <input type="file" name="file" accept="image/png,image/jpeg" required>
+                        <button type="submit" class="btn btn-primary">Обновить аватар</button>
+                    </form>
+                </aside>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

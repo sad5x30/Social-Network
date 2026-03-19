@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Sociable</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260318a" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-layer"></div>
+
+    <header class="topbar">
+        <a href="/" class="brand">
+            <span class="brand-dot"></span>
+            <span class="brand-name">Sociable | Subscribes</span>
+        </a>
+
+        <nav class="top-actions">
+            <a href="/" class="btn btn-ghost">Вернуться</a>
+        </nav>
+    </header>
+
+    <main class="home-main">
+        <section class="feed-section subs-shell">
+            <div class="subs-head">
+                <div>
+                    <p class="hero-kicker">Люди</p>
+                    <h2>Мои подписки</h2>
+                </div>
+                {% if is_authorized %}
+                <form method="get" action="/subscibes" class="subs-search">
+                    <input type="text" name="q" value="{{ query }}" placeholder="Поиск по имени">
+                    <button type="submit" class="btn btn-primary">Найти</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if is_authorized %}
+                <div class="subs-stats">
+                    <article class="stat-card">
+                        <p>Всего подписок</p>
+                        <strong>{{ total_count }}</strong>
+                    </article>
+                    <article class="stat-card">
+                        <p>Подписчики</p>
+                        <strong>{{ subscribers_count }}</strong>
+                    </article>
+                    <article class="stat-card">
+                        <p>Взаимные</p>
+                        <strong>{{ mutual_count }}</strong>
+                    </article>
+                </div>
+
+                {% if subscriptions %}
+                    <div class="subs-grid">
+                        {% for user in subscriptions %}
+                            <article class="sub-card">
+                                <div class="sub-avatar">
+                                    {% if user.avatar %}
+                                        <img src="{{ user.avatar }}" alt="Аватар {{ user.username }}" class="sub-avatar-image">
+                                    {% else %}
+                                        {{ user.initial }}
+                                    {% endif %}
+                                </div>
+                                <div class="sub-meta">
+                                    <h3>{{ user.username }}</h3>
+                                    <p>{{ "Взаимная подписка" if user.is_mutual else "Вы подписаны" }}</p>
+                                </div>
+                                <div class="sub-actions">
+                                    <span class="sub-badge {{ 'mutual' if user.is_mutual else '' }}">
+                                        {{ "Взаимно" if user.is_mutual else "Подписка" }}
+                                    </span>
+                                    <form method="post" action="/unsubscribe/{{ user.id }}">
+                                        <button type="submit" class="action-btn delete-btn">Отписаться</button>
+                                    </form>
+                                    <div class="chat-button">
+                                        <form method="post" action="/chat/{{ user.id }}">
+                                            <button type="submit">💬</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        {% if query %}
+                            По запросу ничего не найдено.
+                        {% else %}
+                            Пока нет подписок.
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div class="subs-head">
+                    <div>
+                        <p class="hero-kicker">Люди</p>
+                        <h2>На вас подписаны</h2>
+                    </div>
+                </div>
+
+                {% if subscribers %}
+                    <div class="subs-grid">
+                        {% for user in subscribers %}
+                            <article class="sub-card">
+                                <div class="sub-avatar">
+                                    {% if user.avatar %}
+                                        <img src="{{ user.avatar }}" alt="Аватар {{ user.username }}" class="sub-avatar-image">
+                                    {% else %}
+                                        {{ user.initial }}
+                                    {% endif %}
+                                </div>
+                                <div class="sub-meta">
+                                    <h3>{{ user.username }}</h3>
+                                    <p>{{ "Взаимная подписка" if user.is_mutual else "Подписан на вас" }}</p>
+                                </div>
+                                <div class="sub-actions">
+                                    <span class="sub-badge {{ 'mutual' if user.is_mutual else '' }}">
+                                        {{ "Взаимно" if user.is_mutual else "Подписчик" }}
+                                    </span>
+                                    <div class="chat-button">
+                                        <form method="post" action="/chat/{{ user.id }}">
+                                            <button type="submit">💬</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        {% if query %}
+                            По запросу среди подписчиков ничего не найдено.
+                        {% else %}
+                            Пока на вас никто не подписан.
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    Чтобы смотреть подписки, войдите в аккаунт.
+                </div>
+                <a href="/auth/login" class="btn btn-primary">Войти</a>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <nav class="navigation">
+            <a href="/" class="nav-btn">Главная</a>
+            <a href="/auth/profile" class="nav-btn">Профиль</a>
+            <a href="/subscibes" class="nav-btn nav-btn-active">Подписки</a>
+        </nav>
+    </footer>
+</body>
+</html>
