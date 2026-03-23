@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from models.users import TableUsers
 from models.chat import TableChats
 from models.messages import TableMessages
+from services.websocket_manager import send_message
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -113,5 +114,15 @@ async def message(chat_id: int, content: str = Form(...), session: AsyncSession 
     new_message = TableMessages(chat_id=chat_id, sender_id=current_user.id, text=text)
     session.add(new_message)
     await session.commit()
+
+    # определить получателя
+    receiver_id = chat.user1_id if chat.user2_id == current_user.id else chat.user2_id
+
+    await send_message(receiver_id, {
+        "type": "new_message",
+        "chat_id": chat_id,
+        "text": text,
+        "sender_id": current_user.id
+    })
 
     return RedirectResponse(url=f"/chat/{chat_id}", status_code=303)

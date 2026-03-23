@@ -21,7 +21,7 @@
 
     <main class="chat-main">
         <section class="chat-shell">
-            <div id="chatMessages" class="chat-messages">
+            <div id="chatMessages" class="chat-messages" data-current-user-id="{{ current_user_id }}">
                 {% if new_message %}
                     {% for m in new_message %}
                         <article class="message-row {% if m.sender_id == current_user_id %}own{% else %}other{% endif %}">
@@ -52,9 +52,64 @@
     <script>
         (function () {
             const container = document.getElementById('chatMessages');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
+            const userId = container ? Number(container.dataset.currentUserId) : null;
+
+            function scrollToBottom() {
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
             }
+
+            function removeEmptyState() {
+                const emptyState = container ? container.querySelector('.chat-empty') : null;
+                if (emptyState) {
+                    emptyState.remove();
+                }
+            }
+
+            function appendMessage(text, senderId) {
+                if (!container) {
+                    return;
+                }
+
+                removeEmptyState();
+
+                const row = document.createElement('article');
+                row.className = `message-row ${senderId === userId ? 'own' : 'other'}`;
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+
+                const messageText = document.createElement('p');
+                messageText.className = 'message-text';
+                messageText.textContent = text;
+
+                bubble.appendChild(messageText);
+                row.appendChild(bubble);
+                container.appendChild(row);
+                scrollToBottom();
+            }
+
+            scrollToBottom();
+
+            if (userId === null) {
+                return;
+            }
+
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${userId}`);
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'new_message' && typeof data.text === 'string') {
+                    appendMessage(data.text, data.sender_id);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
         })();
     </script>
 </body>

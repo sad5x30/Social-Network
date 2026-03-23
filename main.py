@@ -32,6 +32,7 @@ from routers.likes.delete_likes import router as likes_deleting_router
 from routers.sub.subscibe import router as sub_router
 from routers.sub.unsubscribe import router as unsub_router
 from routers.chat.create_chat import router as chat_router
+from routers.websocket_endpoint import router as web_route
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -49,6 +50,7 @@ app.include_router(likes_deleting_router)
 app.include_router(sub_router)
 app.include_router(unsub_router)
 app.include_router(chat_router)
+app.include_router(web_route)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
