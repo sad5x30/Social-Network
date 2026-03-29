@@ -32,16 +32,3 @@ class TableUsers(Base):
         back_populates="rel_target_user",
         cascade="all, delete-orphan",
     )
-
-    chat_1 = relationship(
-        "TableChats",
-        foreign_keys="TableChats.user1_id",
-        back_populates="user_1",
-    )
-
-    chat_2 = relationship(
-        "TableChats",
-        foreign_keys="TableChats.user2_id",
-        back_populates="user_2",
-    )
-

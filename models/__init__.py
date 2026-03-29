@@ -3,8 +3,9 @@ from models.posts import TablePosts
 from models.comments import TableComment
 from models.likes import TableLikes
 from models.subscriptions import TableSub
-from models.chat import TableChats
+from models.chat import Chat
 from models.messages import TableMessages
+from models.chat_parcipant import ChatParticipant
 
 __all__ = [
     "TableUsers",
@@ -12,6 +13,7 @@ __all__ = [
     "TableComment",
     "TableLikes",
     "TableSub",
-    "TableChats",
+    "Chat",
     "TableMessages",
+    "ChatParticipant",
 ]

@@ -74,7 +74,7 @@
                                         <button type="submit" class="action-btn delete-btn">Отписаться</button>
                                     </form>
                                     <div class="chat-button">
-                                        <form method="post" action="/chat/{{ user.id }}">
+                                        <form method="post" action="/chats/legacy/direct/{{ user.id }}">
                                             <button type="submit">💬</button>
                                         </form>
                                     </div>
@@ -119,7 +119,7 @@
                                         {{ "Взаимно" if user.is_mutual else "Подписчик" }}
                                     </span>
                                     <div class="chat-button">
-                                        <form method="post" action="/chat/{{ user.id }}">
+                                        <form method="post" action="/chats/legacy/direct/{{ user.id }}">
                                             <button type="submit">💬</button>
                                         </form>
                                     </div>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Sociable Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260308-chat" rel="stylesheet">
+    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260329-chat" rel="stylesheet">
 </head>
 <body class="chat-page">
     <div class="bg-layer"></div>
@@ -15,13 +15,18 @@
                 <p class="chat-kicker">Private chat</p>
                 <h1>Conversation #{{ chat.id }}</h1>
             </div>
-            <a href="/" class="btn btn-ghost">Back to feed</a>
+            <a href="/" class="btn btn-ghost">На главную</a>
         </div>
     </header>
 
     <main class="chat-main">
         <section class="chat-shell">
-            <div id="chatMessages" class="chat-messages" data-current-user-id="{{ current_user_id }}">
+            <div
+                id="chatMessages"
+                class="chat-messages"
+                data-current-user-id="{{ current_user_id }}"
+                data-chat-id="{{ chat.id }}"
+            >
                 {% if new_message %}
                     {% for m in new_message %}
                         <article class="message-row {% if m.sender_id == current_user_id %}own{% else %}other{% endif %}">
@@ -36,14 +41,14 @@
                     {% endfor %}
                 {% else %}
                     <div class="empty-state chat-empty">
-                        <h3>No messages yet.</h3>
-                        <p>Send the first message to start this conversation.</p>
+                        <h3>Нет сообщений.</h3>
+                        <p>Отправьте первое сообщение для старта чата.</p>
                     </div>
                 {% endif %}
             </div>
 
-            <form class="chat-composer" method="post" action="/message/{{ chat.id }}">
-                <input type="text" name="content" maxlength="2000" required placeholder="Type a message...">
+            <form id="chatComposer" class="chat-composer">
+                <input id="chatInput" type="text" maxlength="2000" required placeholder="Type a message...">
                 <button type="submit" class="btn btn-primary">Send</button>
             </form>
         </section>
@@ -52,64 +57,121 @@
     <script>
         (function () {
             const container = document.getElementById('chatMessages');
-            const userId = container ? Number(container.dataset.currentUserId) : null;
+            const composer = document.getElementById('chatComposer');
+            const input = document.getElementById('chatInput');
+
+            if (!container || !composer || !input) {
+                return;
+            }
+
+            const userId = Number(container.dataset.currentUserId);
+            const chatId = Number(container.dataset.chatId);
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            let socket = null;
+            let reconnectTimer = null;
 
             function scrollToBottom() {
-                if (container) {
-                    container.scrollTop = container.scrollHeight;
-                }
+                container.scrollTop = container.scrollHeight;
             }
 
             function removeEmptyState() {
-                const emptyState = container ? container.querySelector('.chat-empty') : null;
+                const emptyState = container.querySelector('.chat-empty');
                 if (emptyState) {
                     emptyState.remove();
                 }
             }
 
-            function appendMessage(text, senderId) {
-                if (!container) {
-                    return;
+            function formatTime(value) {
+                if (!value) {
+                    return '';
                 }
 
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return value;
+                }
+
+                return date.toLocaleString();
+            }
+
+            function appendMessage(message) {
                 removeEmptyState();
 
                 const row = document.createElement('article');
-                row.className = `message-row ${senderId === userId ? 'own' : 'other'}`;
+                const isOwn = Number(message.sender_id) === userId;
+                row.className = `message-row ${isOwn ? 'own' : 'other'}`;
 
                 const bubble = document.createElement('div');
                 bubble.className = 'message-bubble';
 
                 const messageText = document.createElement('p');
                 messageText.className = 'message-text';
-                messageText.textContent = text;
+                messageText.textContent = message.text || '';
 
+                const meta = document.createElement('div');
+                meta.className = 'message-meta';
+
+                const author = document.createElement('span');
+                author.textContent = isOwn ? 'You' : `User #${message.sender_id}`;
+
+                const time = document.createElement('time');
+                time.textContent = formatTime(message.created_at);
+
+                meta.appendChild(author);
+                meta.appendChild(time);
                 bubble.appendChild(messageText);
+                bubble.appendChild(meta);
                 row.appendChild(bubble);
                 container.appendChild(row);
                 scrollToBottom();
             }
 
-            scrollToBottom();
+            function connect() {
+                socket = new WebSocket(`${wsProtocol}//${window.location.host}/chats/ws/${chatId}`);
 
-            if (userId === null) {
-                return;
+                socket.onmessage = (event) => {
+                    let payload;
+
+                    try {
+                        payload = JSON.parse(event.data);
+                    } catch (error) {
+                        payload = { type: 'new_message', text: event.data };
+                    }
+
+                    if (payload.type === 'new_message' && typeof payload.text === 'string') {
+                        appendMessage(payload);
+                    }
+                };
+
+                socket.onclose = () => {
+                    if (reconnectTimer !== null) {
+                        window.clearTimeout(reconnectTimer);
+                    }
+
+                    reconnectTimer = window.setTimeout(connect, 1500);
+                };
+
+                socket.onerror = () => {
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.close();
+                    }
+                };
             }
 
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${userId}`);
+            composer.addEventListener('submit', (event) => {
+                event.preventDefault();
 
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-
-                if (data.type === 'new_message' && typeof data.text === 'string') {
-                    appendMessage(data.text, data.sender_id);
+                const text = input.value.trim();
+                if (!text || !socket || socket.readyState !== WebSocket.OPEN) {
+                    return;
                 }
-            };
 
-            ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
+                socket.send(JSON.stringify({ text }));
+                input.value = '';
+            });
+
+            scrollToBottom();
+            connect();
         })();
     </script>
 </body>

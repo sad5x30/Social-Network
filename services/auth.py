@@ -1,9 +1,9 @@
-from fastapi import Depends, HTTPException, APIRouter, Request, Form, UploadFile, File
+from fastapi import Depends, HTTPException, APIRouter, Request, Form, UploadFile, File, WebSocket, WebSocketException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import async_session
+from database import get_db
 from models.users import TableUsers
 from sqlalchemy import select
 from fastapi.templating import Jinja2Templates
@@ -30,11 +30,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY is not set")
-
-async def get_db():
-    async with async_session() as db:
-        yield db
-
 
 def _password_to_bcrypt_input(password: str) -> bytes:
     # Pre-hash removes bcrypt 72-byte input limit while keeping bcrypt as KDF.
@@ -161,6 +156,28 @@ async def get_current_user_optional(
         select(TableUsers).where(TableUsers.id == user_id)
     )
     return result.scalar_one_or_none()
+
+async def get_current_user_ws(websocket: WebSocket, db: AsyncSession):
+    token = websocket.cookies.get("access_token")
+
+    if not token:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload.get("sub"))
+    except (JWTError, TypeError, ValueError):
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+
+    result = await db.execute(
+        select(TableUsers).where(TableUsers.id == user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+
+    return user
 
 @router.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, current_user: TableUsers = Depends(get_current_user)):

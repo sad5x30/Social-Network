@@ -23,3 +23,8 @@ async_session = sessionmaker(
 )
 
 Base = declarative_base()
+
+
+async def get_db():
+    async with async_session() as db:
+        yield db

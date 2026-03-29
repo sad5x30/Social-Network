@@ -14,8 +14,9 @@ from models.comments import TableComment
 from models.likes import TableLikes
 from models.posts import TablePosts
 from models.subscriptions import TableSub
-from models.chat import TableChats
+from models.chat import Chat
 from models.messages import TableMessages
+from models.chat_parcipant import ChatParticipant
 
 config = context.config
 
