@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import async_session
@@ -6,6 +6,7 @@ from models.posts import TablePosts
 from models.users import TableUsers
 from services.auth import get_current_user
 from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -16,7 +17,13 @@ async def get_db():
 
 
 @router.delete("/delete/{post_id}")
-async def deleting(post_id: int, session: AsyncSession = Depends(get_db), current_user: TableUsers = Depends(get_current_user)):
+@router.post("/delete/{post_id}")
+async def deleting(
+    post_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_db),
+    current_user: TableUsers = Depends(get_current_user),
+):
     result = await session.execute(
         select(TablePosts).where(TablePosts.id == post_id)
     )
@@ -37,4 +44,7 @@ async def deleting(post_id: int, session: AsyncSession = Depends(get_db), curren
 
     await session.delete(del_post)
     await session.commit()
+    if request.method == "DELETE":
+        return JSONResponse({"ok": True})
+
     return RedirectResponse(url="/", status_code=303)

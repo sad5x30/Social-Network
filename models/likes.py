@@ -11,7 +11,7 @@ class TableLikes(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user_id = Column(Integer, ForeignKey("table_users.id"), nullable=False, index=True)
-    post_id = Column(Integer, ForeignKey("table_posts.id"), nullable=False, index=True)
+    post_id = Column(Integer, ForeignKey("table_posts.id"), index=True)
 
     __table_args__ = (UniqueConstraint("user_id", "post_id", name="uq_likes_user_post"),)
 

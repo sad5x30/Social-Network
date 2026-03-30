@@ -9,7 +9,7 @@ class TableComment(Base):
     id = Column(Integer, primary_key=True)
 
     user_id = Column(Integer, ForeignKey("table_users.id"), index=True, nullable=False)
-    post_id = Column(Integer, ForeignKey("table_posts.id"), index=True, nullable=False)
+    post_id = Column(Integer, ForeignKey("table_posts.id"), index=True, nullable=True)
 
     content = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

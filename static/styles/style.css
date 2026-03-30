@@ -254,6 +254,38 @@ button.btn-primary:hover {
     white-space: pre-wrap;
 }
 
+.post-edit-inline {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    background: #ffffff;
+    display: grid;
+    gap: 10px;
+}
+
+.post-edit-inline h3 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.post-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.post-edit-actions .btn,
+.post-edit-actions .action-btn {
+    width: auto;
+}
+
+.post.is-editing .post-content,
+.post.is-editing .post-actions,
+.post.is-editing .comments {
+    display: none;
+}
+
 .empty-state {
     padding: 20px;
     border: 1px dashed var(--border);
@@ -312,7 +344,8 @@ form {
     gap: 10px;
 }
 
-input {
+input,
+textarea {
     width: 100%;
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -321,7 +354,13 @@ input {
     font-family: inherit;
 }
 
-input:focus {
+textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+input:focus,
+textarea:focus {
     outline: none;
     border-color: rgba(15, 118, 110, 0.5);
     box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.14);
@@ -451,6 +490,11 @@ label {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.user-tools .inline-form {
+    display: block;
+    gap: 0;
 }
 
 .action-btn {

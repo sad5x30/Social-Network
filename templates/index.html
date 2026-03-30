@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Sociable</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260304c" rel="stylesheet">
+    <link href="{{ url_for('static', path='styles/style.css') }}?v=20260330a" rel="stylesheet">
 </head>
 <body>
     <div class="bg-layer"></div>
@@ -57,31 +57,20 @@
                                 </div>
                                 <small>{{ post.created_at }}</small>
                             </div>
-                            <p>{{ post.content }}</p>
+                            <p class="post-content">{{ post.content }}</p>
                             <div class="tools">
-                                <script>
-                                    async function deletePost(postId) {
-                                        if (!confirm('Вы уверены, что хотите удалить пост?')) return;
-
-                                        try {
-                                            const response = await fetch(`/delete/${postId}`, {
-                                                method: 'DELETE',
-                                                redirect: 'follow'
-                                            });
-
-                                            if (response.redirected) {
-                                                window.location.href = response.url;
-                                            } else if (response.ok) {
-                                                window.location.reload();
-                                            } else {
-                                                const error = await response.json();
-                                                alert(error.detail || 'Ошибка при удалении');
-                                            }
-                                        } catch (err) {
-                                            console.error('Ошибка сети:', err);
-                                        }
-                                    }
-                                </script>
+                                {% if current_user_id == post.user_id %}
+                                <div id="update_inline_{{ post.id }}" class="post-edit-inline hidden">
+                                    <h3>Редактирование поста</h3>
+                                    <form method="post" action="/update_post/{{ post.id }}">
+                                        <textarea name="content" rows="5" placeholder="Что у тебя нового?" required>{{ post.content }}</textarea>
+                                        <div class="post-edit-actions">
+                                            <button type="button" class="action-btn" data-cancel-inline-edit>Отмена</button>
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                {% endif %}
 
                                 <div class="post-actions">
                                     <div class="social-tools">
@@ -98,8 +87,10 @@
 
                                     {% if current_user_id == post.user_id %}
                                     <div class="user-tools">
-                                        <button type="button" class="action-btn edit-btn" onclick="const m=document.getElementById('update_modal_{{ post.id }}'); if(m){m.style.display='flex'; m.setAttribute('aria-hidden','false');}">Изменить</button>
-                                        <button type="button" class="action-btn delete-btn" onclick="deletePost('{{ post.id }}')">Удалить</button>
+                                        <button type="button" class="action-btn edit-btn" data-inline-edit="update_inline_{{ post.id }}">Изменить</button>
+                                        <form method="post" action="/delete/{{ post.id }}" class="inline-form" onsubmit="return confirm('Вы уверены, что хотите удалить пост?')">
+                                            <button type="submit" class="action-btn delete-btn">Удалить</button>
+                                        </form>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -123,7 +114,7 @@
                                                     <button
                                                         type="button"
                                                         class="comment-action-btn"
-                                                        onclick="const tools=document.getElementById('update_comm_modal_{{ com.id }}'); if(tools){tools.style.display='flex'; m.setAttribute('aria-hidden','false');}"
+                                                        data-open-modal="update_comm_modal_{{ com.id }}"
                                                     >
                                                         Изменить
                                                     </button>
@@ -133,19 +124,6 @@
                                                 </div>
                                                 {% endif %}
                                             </div>
-
-                                            {% if current_user_id == com.user_id %}
-                                            <div id="update_comm_modal_{{ com.id }}" class="modal" aria-hidden="true">
-                                                <div class="modal-content">
-                                                    <button class="modal-close" type="button" data-close-modal aria-label="Закрыть">x</button>
-                                                    <h3>Изменение комментария</h3>
-                                                    <form method="post" action="/update_comm/{{ post.id }}/{{ com.id }}">
-                                                        <input type="text" name="content" value="{{ com.content }}" required>
-                                                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                            {% endif %}
                                         {% endfor %}
                                     {% else %}
                                         <div class="empty-state">
@@ -159,23 +137,27 @@
                                         <button type="submit" class="btn btn-primary">Отправить</button>
                                     </form>
                                 </div>
-
-                                {% if current_user_id == post.user_id %}
-                                <div id="update_modal_{{ post.id }}" class="modal" aria-hidden="true">
-                                    <div class="modal-content">
-                                        <button class="modal-close" type="button" data-close-modal aria-label="Закрыть">x</button>
-                                        <h3>Изменение поста</h3>
-                                        <form method="post" action="/update_post/{{ post.id }}">
-                                            <input type="text" name="content" value="{{ post.content }}" placeholder="Что у тебя нового?" required>
-                                            <button type="submit" class="btn btn-primary">Опубликовать</button>
-                                        </form>
-                                    </div>
-                                </div>
-                                {% endif %}
                             </div>
                         </article>
                     {% endfor %}
                 </div>
+
+                {% for post in posts %}
+                    {% for com in post.rel_comments %}
+                        {% if current_user_id == com.user_id %}
+                        <div id="update_comm_modal_{{ com.id }}" class="modal" aria-hidden="true">
+                            <div class="modal-content">
+                                <button class="modal-close" type="button" data-close-modal aria-label="Закрыть">x</button>
+                                <h3>Изменение комментария</h3>
+                                <form method="post" action="/update_comm/{{ post.id }}/{{ com.id }}">
+                                    <input type="text" name="content" value="{{ com.content }}" required>
+                                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
             {% endif %}
             <a class="pager-link" href="/feed?limit=10&offset={{ offset + limit }}">Следующая страница</a>
         </section>
@@ -201,6 +183,6 @@
         </nav>
     </footer>
 
-    <script src="{{ url_for('static', path='js/scripts.js') }}?v=20260304"></script>
+    <script src="{{ url_for('static', path='js/scripts.js') }}?v=20260330a"></script>
 </body>
 </html>
